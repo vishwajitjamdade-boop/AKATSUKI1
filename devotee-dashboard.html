@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Devotee Portal | DevDarshan</title>
+  <meta name="description" content="DevDarshan Devotee Portal – Book darshan slots, get virtual queue tokens, and track crowd levels for your temple visit." />
+  <!-- AUTH GUARD + SMOOTH FADE -->
+  <style>html{opacity:0;transition:opacity 0.2s ease}</style>
+  <script>
+    (function(){
+      var role=sessionStorage.getItem('dd_role');
+      if(role!=='devotee'){
+        window.location.replace('index.html');
+      } else {
+        document.addEventListener('DOMContentLoaded',function(){
+          document.documentElement.style.opacity='1';
+        });
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Serif+Devanagari:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/devotee.css" />
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">ॐ</div>
+    <div>
+      <div class="sidebar-title">DevDarshan</div>
+      <div class="sidebar-role">Devotee Portal</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" onclick="showSection('home')" id="nav-home">
+      <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+    </button>
+    <button class="nav-item" onclick="showSection('booking')" id="nav-booking">
+      <span class="nav-icon">📅</span><span class="nav-label">Book Slot</span>
+    </button>
+    <button class="nav-item" onclick="showSection('mySlots')" id="nav-mySlots">
+      <span class="nav-icon">🎟️</span><span class="nav-label">My Bookings</span>
+      <span class="badge" id="bookingBadge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" onclick="showSection('crowdStatus')" id="nav-crowdStatus">
+      <span class="nav-icon">📊</span><span class="nav-label">Crowd Status</span>
+    </button>
+    <button class="nav-item" onclick="showSection('virtualQueue')" id="nav-virtualQueue">
+      <span class="nav-icon">📲</span><span class="nav-label">Virtual Queue</span>
+    </button>
+    <button class="nav-item" onclick="showSection('aiPrediction')" id="nav-aiPrediction">
+      <span class="nav-icon">🤖</span><span class="nav-label">Best Time</span>
+    </button>
+    <button class="nav-item" onclick="showSection('priority')" id="nav-priority">
+      <span class="nav-icon">♿</span><span class="nav-label">Priority Access</span>
+    </button>
+    <button class="nav-item" onclick="showSection('routing')" id="nav-routing">
+      <span class="nav-icon">🗺️</span><span class="nav-label">Safe Routing</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="devotee-info">
+      <div class="devotee-avatar">🙏</div>
+      <div>
+        <div class="devotee-name">Devotee User</div>
+        <div class="devotee-since">Logged in</div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</aside>
+
+<!-- ── MAIN CONTENT ── -->
+<main class="main-content">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="page-title" id="pageTitle">Welcome to DevDarshan</div>
+    </div>
+    <div class="topbar-right">
+      <div class="temple-selector">
+        <select id="templeSelect" onchange="changeTemple()">
+          <option value="somnath">🛕 Somnath Temple</option>
+          <option value="dwarkadhish">🛕 Dwarkadhish Temple</option>
+          <option value="ambaji">🛕 Ambaji Temple</option>
+          <option value="pavagadh">🛕 Pavagadh Temple</option>
+        </select>
+      </div>
+      <div class="crowd-pill" id="globalCrowdPill">🟢 LOW</div>
+      <div class="live-clock" id="liveClock"></div>
+    </div>
+  </header>
+
+  <!-- ════════ SECTION: HOME ════════ -->
+  <section class="section active" id="section-home">
+    <div class="home-hero">
+      <div class="hero-content">
+        <div class="hero-om">ॐ</div>
+        <h1 class="hero-title">Welcome, Devotee 🙏</h1>
+        <p class="hero-subtitle">Plan your darshan visit with real-time crowd information and smart slot booking</p>
+        <div class="hero-actions">
+          <button class="hero-btn primary" onclick="showSection('booking')">📅 Book Darshan Slot</button>
+          <button class="hero-btn secondary" onclick="showSection('crowdStatus')">📊 Check Crowd Status</button>
+        </div>
+      </div>
+      <div class="hero-card">
+        <div class="hc-title">Current Temple Status</div>
+        <div class="hc-temple" id="hcTemple">Somnath Temple</div>
+        <div class="hc-status" id="hcStatus">
+          <div class="hcs-item"><span class="hcs-dot green"></span> 🟢 Low Crowd</div>
+          <div class="hcs-item">⏱️ Avg Wait: <strong>~12 min</strong></div>
+          <div class="hcs-item">🎟️ Slots Available: <strong id="hcSlotsLeft">24</strong></div>
+        </div>
+        <button class="hc-btn" onclick="showSection('booking')">Book Now →</button>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+      <div class="qs-card">
+        <div class="qs-icon">📊</div>
+        <div class="qs-val qs-green">🟢 Low</div>
+        <div class="qs-label">Current Crowd</div>
+      </div>
+      <div class="qs-card">
+        <div class="qs-icon">⏱️</div>
+        <div class="qs-val" id="qsWait">~12 min</div>
+        <div class="qs-label">Wait Time</div>
+      </div>
+      <div class="qs-card" onclick="showSection('mySlots')" style="cursor:pointer">
+        <div class="qs-icon">🎟️</div>
+        <div class="qs-val" id="qsMySlots">0</div>
+        <div class="qs-label">My Bookings</div>
+      </div>
+      <div class="qs-card">
+        <div class="qs-icon">👥</div>
+        <div class="qs-val" id="qsPilgrims">1,240</div>
+        <div class="qs-label">People Today</div>
+      </div>
+    </div>
+
+    <!-- Today's Crowd Chart -->
+    <div class="panel">
+      <h3 class="panel-title">📈 Today's Crowd Pattern – <span id="chartTempleName">Somnath Temple</span></h3>
+      <canvas id="homeChartCanvas" height="200"></canvas>
+      <div class="chart-legend">
+        <div class="cl-item"><span class="cl-dot" style="background:#66bb6a"></span> 🟢 Low (&lt;500)</div>
+        <div class="cl-item"><span class="cl-dot" style="background:#ffd54f"></span> 🟡 Medium (500–1500)</div>
+        <div class="cl-item"><span class="cl-dot" style="background:#ef5350"></span> 🔴 High (&gt;1500)</div>
+        <div class="cl-item"><span class="cl-dot" style="background:#ff6b35;border-radius:0"></span> ▶ Current Time</div>
+      </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="tips-panel">
+      <h3 class="panel-title">💡 Visitor Tips</h3>
+      <div class="tips-grid">
+        <div class="tip-card">🌅<p>Best time to visit is early morning (6–8 AM) for minimal crowds</p></div>
+        <div class="tip-card">📱<p>Get your virtual token before reaching the temple</p></div>
+        <div class="tip-card">♿<p>Senior citizens and differently-abled devotees get priority queue</p></div>
+        <div class="tip-card">⏰<p>Reserve slot activates automatically if you miss your booked slot</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: BOOK SLOT ════════ -->
+  <section class="section" id="section-booking">
+    <div class="section-header">
+      <h2>📅 Book Darshan Slot</h2>
+      <div class="reserve-notice">ℹ️ 25% reserve buffer in every slot</div>
+    </div>
+
+    <!-- Step 1: Select Temple & Date -->
+    <div class="booking-steps">
+      <div class="step-indicator">
+        <div class="step active" id="step1ind"><span>1</span> Select Temple</div>
+        <div class="step-line"></div>
+        <div class="step" id="step2ind"><span>2</span> Pick Slot</div>
+        <div class="step-line"></div>
+        <div class="step" id="step3ind"><span>3</span> Confirm</div>
+        <div class="step-line"></div>
+        <div class="step" id="step4ind"><span>4</span> Token 🎟️</div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step-content active" id="step-1">
+        <div class="panel step-panel">
+          <h3 class="panel-title">Step 1: Choose Temple & Date</h3>
+          <div class="booking-form">
+            <div class="bf-field">
+              <label>Temple</label>
+              <div class="temple-cards-mini">
+                <div class="tcm-card active" onclick="selectTemple(this, 'somnath')" data-temple="somnath">
+                  <div class="tcm-icon">🛕</div>
+                  <div class="tcm-name">Somnath</div>
+                </div>
+                <div class="tcm-card" onclick="selectTemple(this, 'dwarkadhish')" data-temple="dwarkadhish">
+                  <div class="tcm-icon">🛕</div>
+                  <div class="tcm-name">Dwarkadhish</div>
+                </div>
+                <div class="tcm-card" onclick="selectTemple(this, 'ambaji')" data-temple="ambaji">
+                  <div class="tcm-icon">🛕</div>
+                  <div class="tcm-name">Ambaji</div>
+                </div>
+                <div class="tcm-card" onclick="selectTemple(this, 'pavagadh')" data-temple="pavagadh">
+                  <div class="tcm-icon">🛕</div>
+                  <div class="tcm-name">Pavagadh</div>
+                </div>
+              </div>
+            </div>
+            <div class="bf-field">
+              <label>Date of Visit</label>
+              <input type="date" id="visitDate" />
+            </div>
+            <div class="bf-field">
+              <label>Number of Devotees</label>
+              <div class="counter-input">
+                <button onclick="changeCount(-1)">−</button>
+                <span id="devoteeCount">1</span>
+                <button onclick="changeCount(1)">+</button>
+              </div>
+            </div>
+            <div class="bf-field">
+              <label>Special Category (optional)</label>
+              <select id="specialCat">
+                <option value="">None</option>
+                <option value="senior">👴 Senior Citizen (60+)</option>
+                <option value="disabled">♿ Differently-Abled</option>
+                <option value="pregnant">🤰 Pregnant Woman</option>
+                <option value="child">👶 With Infant</option>
+                <option value="vip">⭐ VIP / Donor</option>
+              </select>
+            </div>
+            <button class="next-btn" onclick="goToStep(2)">Next: Select Time Slot →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-content" id="step-2">
+        <div class="panel step-panel">
+          <h3 class="panel-title">Step 2: Select Time Slot</h3>
+          <div class="slot-legend">
+            <span><span class="sl-dot green"></span> Available</span>
+            <span><span class="sl-dot yellow"></span> Almost Full</span>
+            <span><span class="sl-dot red"></span> Full</span>
+            <span><span class="sl-dot purple"></span> Reserve Only</span>
+          </div>
+          <div class="availability-chart" id="availabilityChart"></div>
+          <div class="selected-slot-info" id="selectedSlotInfo" style="display:none">
+            <div class="ssi-header">Selected Slot</div>
+            <div class="ssi-content" id="ssiContent"></div>
+          </div>
+          <div class="step-btns">
+            <button class="back-step-btn" onclick="goToStep(1)">← Back</button>
+            <button class="next-btn" onclick="goToStep(3)" id="step2Next" disabled>Next: Confirm →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-content" id="step-3">
+        <div class="panel step-panel">
+          <h3 class="panel-title">Step 3: Confirm Booking</h3>
+          <div class="confirm-summary" id="confirmSummary"></div>
+          <div class="step-btns">
+            <button class="back-step-btn" onclick="goToStep(2)">← Back</button>
+            <button class="confirm-btn" onclick="confirmBooking()">✅ Confirm Booking</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Token -->
+      <div class="step-content" id="step-4">
+        <div class="panel step-panel token-panel">
+          <div class="token-success">
+            <div class="success-icon">✅</div>
+            <h3>Booking Confirmed!</h3>
+            <p>Your darshan slot has been reserved</p>
+          </div>
+          <div class="token-card" id="tokenCard"></div>
+          <div class="token-actions">
+            <button class="tok-btn" onclick="downloadToken()">📥 Save Token</button>
+            <button class="tok-btn secondary" onclick="showSection('mySlots')">View My Bookings</button>
+            <button class="tok-btn ghost" onclick="resetBooking()">+ Book Another</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: MY BOOKINGS ════════ -->
+  <section class="section" id="section-mySlots">
+    <div class="section-header">
+      <h2>🎟️ My Bookings</h2>
+      <button class="book-new-btn" onclick="showSection('booking')">+ New Booking</button>
+    </div>
+
+    <div class="bookings-empty" id="bookingsEmpty" style="display:none">
+      <div class="empty-icon">🎟️</div>
+      <h3>No bookings yet</h3>
+      <p>Book your first darshan slot to get started</p>
+      <button class="hero-btn primary" onclick="showSection('booking')">Book Now</button>
+    </div>
+
+    <div class="bookings-list" id="bookingsList"></div>
+  </section>
+
+  <!-- ════════ SECTION: CROWD STATUS ════════ -->
+  <section class="section" id="section-crowdStatus">
+    <div class="section-header">
+      <h2>📊 Live Crowd Status</h2>
+      <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
+    </div>
+
+    <!-- Current crowd level -->
+    <div class="crowd-level-display" id="crowdLevelDisplay">
+      <div class="cld-main">
+        <div class="cld-emoji" id="cldEmoji">🟢</div>
+        <div class="cld-level" id="cldLevel">LOW CROWD</div>
+        <div class="cld-count" id="cldCount">~780 pilgrims currently</div>
+      </div>
+      <div class="cld-stats">
+        <div class="cld-stat"><div class="cld-stat-val" id="csWait">~12 min</div><div class="cld-stat-label">Avg Wait</div></div>
+        <div class="cld-stat"><div class="cld-stat-val" id="csCap">22%</div><div class="cld-stat-label">% Capacity</div></div>
+        <div class="cld-stat"><div class="cld-stat-val" id="csSlots">24</div><div class="cld-stat-label">Slots Left</div></div>
+      </div>
+    </div>
+
+    <div class="dashboard-row">
+      <div class="panel" style="flex:2">
+        <h3 class="panel-title">📈 Crowd Throughout the Day</h3>
+        <canvas id="crowdStatusChart" height="240"></canvas>
+      </div>
+      <div class="panel" style="flex:1">
+        <h3 class="panel-title">📋 Zone Status</h3>
+        <div class="zone-mini-list" id="zoneMiniList"></div>
+      </div>
+    </div>
+
+    <!-- Crowd forecast for today -->
+    <div class="panel">
+      <h3 class="panel-title">🕐 Today's Crowd by Hour</h3>
+      <div class="hourly-crowd" id="hourlyCrowd"></div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: VIRTUAL QUEUE ════════ -->
+  <section class="section" id="section-virtualQueue">
+    <div class="section-header">
+      <h2>📲 Virtual Queue System</h2>
+    </div>
+
+    <div class="vq-container">
+      <div class="panel vq-status-panel">
+        <h3 class="panel-title">📊 Current Queue Status</h3>
+        <div class="vq-meter">
+          <div class="vq-meter-bar" id="vqMeterBar"></div>
+        </div>
+        <div class="vq-stats">
+          <div class="vq-stat"><span class="vqs-val" id="vqAhead">47</span><span class="vqs-label">People Ahead</span></div>
+          <div class="vq-stat"><span class="vqs-val" id="vqWait">~23 min</span><span class="vqs-label">Est. Wait</span></div>
+          <div class="vq-stat"><span class="vqs-val" id="vqToken">—</span><span class="vqs-label">My Token</span></div>
+        </div>
+        <div class="crowd-emoji-display" id="crowdEmojiDisplay">🟢</div>
+      </div>
+
+      <div class="panel vq-join-panel" id="vqJoinPanel">
+        <h3 class="panel-title">🎫 Join Queue</h3>
+        <p class="vq-desc">Select a time slot to join the virtual queue and get your token number</p>
+        <div class="bf-field">
+          <label>Preferred Time</label>
+          <select id="vqTimeSelect">
+            <option>06:00–06:30 AM</option>
+            <option>06:30–07:00 AM</option>
+            <option>07:00–07:30 AM</option>
+            <option>10:00–10:30 AM</option>
+            <option selected>10:30–11:00 AM</option>
+            <option>11:00–11:30 AM</option>
+            <option>11:30–12:00 PM</option>
+            <option>16:00–16:30 PM</option>
+            <option>18:00–18:30 PM</option>
+          </select>
+        </div>
+        <div class="bf-field">
+          <label>Mobile Number (for SMS)</label>
+          <input type="tel" id="vqPhone" placeholder="+91 XXXXX XXXXX" />
+        </div>
+        <button class="next-btn" onclick="joinQueue()">📲 Get My Token</button>
+      </div>
+    </div>
+
+    <div class="queue-token-display" id="queueTokenDisplay" style="display:none">
+      <div class="qtd-card" id="qtdCard"></div>
+      <button class="next-btn" onclick="cancelQueueToken()">✕ Cancel Token</button>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: AI PREDICTION ════════ -->
+  <section class="section" id="section-aiPrediction">
+    <div class="section-header">
+      <h2>🤖 Best Time to Visit</h2>
+      <div class="ai-badge">AI Powered</div>
+    </div>
+
+    <div class="best-times-grid" id="bestTimesGrid"></div>
+
+    <div class="panel">
+      <h3 class="panel-title">📊 Crowd Prediction for Next 7 Days</h3>
+      <div class="week-pred" id="weekPred"></div>
+    </div>
+
+    <div class="panel">
+      <h3 class="panel-title">⏰ Best Hours to Visit Today</h3>
+      <canvas id="bestHoursChart" height="200"></canvas>
+    </div>
+
+    <div class="panel ai-tips-panel">
+      <h3 class="panel-title">💡 AI Visit Recommendations</h3>
+      <div class="ai-tips" id="aiTips"></div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: PRIORITY ACCESS ════════ -->
+  <section class="section" id="section-priority">
+    <div class="section-header">
+      <h2>♿ Priority Access</h2>
+    </div>
+
+    <div class="priority-info">
+      <div class="pi-card">
+        <div class="pi-icon">♿</div>
+        <h3>Differently-Abled</h3>
+        <p>Wheelchair ramps, special seating, dedicated entry lane, personal assistance available</p>
+        <button class="priority-btn" onclick="requestPriority('disabled')">Request Priority Access</button>
+      </div>
+      <div class="pi-card">
+        <div class="pi-icon">👴</div>
+        <h3>Senior Citizens (60+)</h3>
+        <p>Dedicated queue, seating area, escort service, medical assistance available</p>
+        <button class="priority-btn" onclick="requestPriority('senior')">Request Priority Access</button>
+      </div>
+      <div class="pi-card">
+        <div class="pi-icon">🤰</div>
+        <h3>Pregnant Women</h3>
+        <p>Priority darshan, rest area, medical support on standby, gentle crowd paths</p>
+        <button class="priority-btn" onclick="requestPriority('pregnant')">Request Priority Access</button>
+      </div>
+      <div class="pi-card">
+        <div class="pi-icon">👶</div>
+        <h3>Families with Infants</h3>
+        <p>Baby room, stroller-friendly paths, dedicated family queue, quieter hours booking</p>
+        <button class="priority-btn" onclick="requestPriority('child')">Request Priority Access</button>
+      </div>
+    </div>
+
+    <!-- Priority booking -->
+    <div class="panel priority-booking-panel" id="priorityBookingPanel" style="display:none">
+      <h3 class="panel-title">🎟️ Priority Booking – <span id="priorityCategory"></span></h3>
+      <div class="priority-form">
+        <div class="bf-field"><label>Full Name</label><input type="text" id="prName" placeholder="Your name..." /></div>
+        <div class="bf-field"><label>Mobile Number</label><input type="tel" id="prPhone" placeholder="+91 XXXXX XXXXX" /></div>
+        <div class="bf-field"><label>Number of People</label><input type="number" id="prPeople" value="1" min="1" max="5" /></div>
+        <div class="bf-field"><label>Preferred Date</label><input type="date" id="prDate" /></div>
+        <div class="bf-field"><label>Medical Note (if any)</label><textarea id="prNote" rows="2" placeholder="Optional medical info..."></textarea></div>
+        <button class="confirm-btn" onclick="submitPriority()">✅ Submit Priority Request</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: SAFE ROUTING ════════ -->
+  <section class="section" id="section-routing">
+    <div class="section-header">
+      <h2>🗺️ Safe Routing Guide</h2>
+      <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
+    </div>
+
+    <div class="routing-recommendation" id="routingRec">
+      <div class="rr-icon">✅</div>
+      <div class="rr-content">
+        <div class="rr-title">Current Recommended Route</div>
+        <div class="rr-path" id="rrPath">Main Entry → North Corridor → Sanctum</div>
+        <div class="rr-desc" id="rrDesc">Low crowd route. Estimated walk time: 5-7 minutes.</div>
+      </div>
+    </div>
+
+    <div class="routing-grid">
+      <div class="route-card" id="routeA">
+        <div class="route-header">
+          <div class="route-name">🟢 Route A – Main Path</div>
+          <div class="route-status-chip" id="routeAChip">RECOMMENDED</div>
+        </div>
+        <div class="route-path">Main Entry → North Hall → Sanctum → Exit</div>
+        <div class="route-stats">
+          <span>⏱️ ~5 min</span>
+          <span>👥 ~120 people</span>
+          <span>📏 380m</span>
+        </div>
+        <div class="route-crowd-bar">
+          <div class="rcb-fill" style="width:30%;background:#66bb6a"></div>
+        </div>
+      </div>
+
+      <div class="route-card" id="routeB">
+        <div class="route-header">
+          <div class="route-name">🟡 Route B – East Path</div>
+          <div class="route-status-chip medium" id="routeBChip">BUSY</div>
+        </div>
+        <div class="route-path">East Entry → Side Hall → Sanctum → South Exit</div>
+        <div class="route-stats">
+          <span>⏱️ ~8 min</span>
+          <span>👥 ~280 people</span>
+          <span>📏 510m</span>
+        </div>
+        <div class="route-crowd-bar">
+          <div class="rcb-fill" style="width:65%;background:#ffd54f"></div>
+        </div>
+      </div>
+
+      <div class="route-card" id="routeC">
+        <div class="route-header">
+          <div class="route-name">🔴 Route C – West Path</div>
+          <div class="route-status-chip high" id="routeCChip">AVOID</div>
+        </div>
+        <div class="route-path">West Gate → Main Hall → Sanctum → North Exit</div>
+        <div class="route-stats">
+          <span>⏱️ ~18 min</span>
+          <span>👥 ~520 people</span>
+          <span>📏 650m</span>
+        </div>
+        <div class="route-crowd-bar">
+          <div class="rcb-fill" style="width:90%;background:#ef5350"></div>
+        </div>
+      </div>
+
+      <div class="route-card" id="routePriority">
+        <div class="route-header">
+          <div class="route-name">💜 Priority Route</div>
+          <div class="route-status-chip priority" id="routePriorityChip">FOR SPECIAL NEEDS</div>
+        </div>
+        <div class="route-path">Priority Lane → Accessible Hall → Sanctum → VIP Exit</div>
+        <div class="route-stats">
+          <span>⏱️ ~4 min</span>
+          <span>👥 &lt;30 people</span>
+          <span>📏 290m</span>
+        </div>
+        <div class="route-crowd-bar">
+          <div class="rcb-fill" style="width:15%;background:#ce93d8"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel navigation-tips">
+      <h3 class="panel-title">🧭 Navigation Tips</h3>
+      <ul class="nav-tips-list">
+        <li>🔴 <strong>Red zones</strong> indicate overcrowding – avoid these areas</li>
+        <li>🟡 <strong>Yellow zones</strong> are manageable but expect a short wait</li>
+        <li>🟢 <strong>Green zones</strong> are clear – follow staff guidance to these</li>
+        <li>📢 <strong>Listen to announcements</strong> for real-time route changes</li>
+        <li>♿ <strong>Special needs?</strong> Inform staff for dedicated assistance</li>
+        <li>📱 <strong>Your token slot time</strong> automatically activates best route</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/devotee.js"></script>
+</body>
+</html>

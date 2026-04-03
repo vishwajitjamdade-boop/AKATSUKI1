@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevDarshan – Smart Temple Crowd Management</title>
+  <meta name="description"
+    content="DevDarshan: AI-powered Smart Crowd Management System for pilgrimage sites. Secure slot booking, real-time monitoring, and intelligent crowd prediction." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Noto+Serif+Devanagari:wght@400;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+
+<body>
+
+  <!-- Animated background particles -->
+  <div class="bg-particles" id="bgParticles"></div>
+
+  <!-- Floating decorative diyas -->
+  <div class="diya diya-1">🪔</div>
+  <div class="diya diya-2">🪔</div>
+  <div class="diya diya-3">🪔</div>
+  <div class="diya diya-4">🪔</div>
+
+  <main class="login-container">
+    <!-- Logo / Brand -->
+    <div class="brand-header">
+      <div class="logo-ring">
+        <span class="om-symbol">ॐ</span>
+      </div>
+      <h1 class="brand-title">DevDarshan</h1>
+      <p class="brand-subtitle">Smart Crowd Management System for Pilgrimage Sites</p>
+      <div class="temples-tag">
+        <span>Somnath</span><span class="dot">•</span>
+        <span>Dwarkadhish</span><span class="dot">•</span>
+        <span>Ambaji</span><span class="dot">•</span>
+        <span>Pavagadh</span>
+      </div>
+    </div>
+
+    <!-- Role Selection -->
+    <div class="role-section">
+      <h2 class="role-title">Select Your Role</h2>
+      <p class="role-desc">Choose your access portal to continue</p>
+
+      <div class="role-cards">
+
+        <!-- Security Admin Card -->
+        <div class="role-card" id="securityCard" onclick="selectRole('security')">
+          <div class="card-glow security-glow"></div>
+          <div class="card-icon security-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <path d="M9 12l2 2 4-4" />
+            </svg>
+          </div>
+          <h3 class="card-title">Security Admin</h3>
+          <p class="card-desc">Monitor crowd levels, manage gates, view AI predictions, and control access for pilgrims.
+          </p>
+          <ul class="card-features">
+            <li>🔴 Live Crowd Dashboard</li>
+            <li>🤖 AI Crowd Prediction</li>
+            <li>🚦 Gate Control System</li>
+            <li>🚨 Emergency Alerts</li>
+          </ul>
+          <div class="card-badge security-badge">Security Portal</div>
+        </div>
+
+        <!-- Devotee Card -->
+        <div class="role-card" id="devoteeCard" onclick="selectRole('devotee')">
+          <div class="card-glow devotee-glow"></div>
+          <div class="card-icon devotee-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <h3 class="card-title">Devotee</h3>
+          <p class="card-desc">Book darshan slots, get virtual queue tokens, track crowd levels, and plan your visit.
+          </p>
+          <ul class="card-features">
+            <li>📲 Virtual Queue Booking</li>
+            <li>📊 Live Crowd Status</li>
+            <li>🎟️ Token Management</li>
+            <li>♿ Priority Access</li>
+          </ul>
+          <div class="card-badge devotee-badge">Devotee Portal</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Login Form (hidden by default) -->
+    <div class="login-form-section" id="loginFormSection">
+      <div class="form-card" id="formCard">
+        <button class="back-btn" onclick="goBack()">← Back</button>
+        <div class="form-header">
+          <div class="form-icon" id="formIcon"></div>
+          <h3 class="form-title" id="formTitle">Login</h3>
+          <p class="form-subtitle" id="formSubtitle">Enter your credentials</p>
+        </div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="input-group">
+            <label for="username">Username / Temple ID</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <input type="text" id="username" placeholder="Enter your ID" required autocomplete="off" />
+            </div>
+          </div>
+          <div class="input-group">
+            <label for="password">Password</label>
+            <div class="input-wrapper">
+              <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <input type="password" id="password" placeholder="Enter password" required />
+              <button type="button" class="eye-btn" onclick="togglePassword()">👁</button>
+            </div>
+          </div>
+          <div class="demo-credentials" id="demoCreds">
+            <span class="demo-label">Demo Credentials:</span>
+            <span id="demoText"></span>
+          </div>
+          <button type="submit" class="login-btn" id="loginBtn">
+            <span class="btn-text">Login</span>
+            <span class="btn-spinner" style="display:none">⟳</span>
+          </button>
+        </form>
+
+        <!-- Register link (shown only for devotee role) -->
+        <div id="registerLink" style="display:none;text-align:center;margin-top:14px">
+          <span style="color:rgba(255,255,255,0.45);font-size:0.85rem">New here? </span>
+          <button onclick="showRegister()"
+            style="background:none;border:none;color:#ce93d8;font-size:0.85rem;cursor:pointer;font-family:inherit;font-weight:600">Create
+            Account →</button>
+        </div>
+
+        <!-- Register form (hidden by default) -->
+        <form id="registerForm" onsubmit="handleRegister(event)" style="display:none">
+          <div style="font-size:0.9rem;font-weight:700;margin-bottom:14px;color:#ce93d8">📝 Create Devotee Account</div>
+          <div class="input-group">
+            <label for="regName">Full Name</label>
+            <div class="input-wrapper"><input type="text" id="regName" placeholder="Your name" required /></div>
+          </div>
+          <div class="input-group">
+            <label for="regUsername">Choose Username</label>
+            <div class="input-wrapper"><input type="text" id="regUsername" placeholder="username" required /></div>
+          </div>
+          <div class="input-group">
+            <label for="regPassword">Choose Password</label>
+            <div class="input-wrapper"><input type="password" id="regPassword" placeholder="password" required /></div>
+          </div>
+          <button type="submit" class="login-btn" id="registerBtn"
+            style="background:linear-gradient(135deg,#ce93d8,#ff6b35)">
+            <span>Create Account</span>
+          </button>
+          <div style="text-align:center;margin-top:10px">
+            <button type="button" onclick="showLogin()"
+              style="background:none;border:none;color:rgba(255,255,255,0.45);font-size:0.82rem;cursor:pointer;font-family:inherit">←
+              Back to Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <span class="stat-val" id="statPilgrims">—</span>
+        <span class="stat-label">Pilgrims Today</span>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <span class="stat-val" id="statSlots">—</span>
+        <span class="stat-label">Slots Booked</span>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <span class="stat-val" id="statTemples">4</span>
+        <span class="stat-label">Temples Active</span>
+      </div>
+      <div class="stat-sep"></div>
+      <div class="stat-item">
+        <span class="stat-val stat-green">🟢 Low</span>
+        <span class="stat-label">Current Crowd</span>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="js/login.js"></script>
+</body>
+
+</html>

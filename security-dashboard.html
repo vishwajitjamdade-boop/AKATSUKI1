@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Security Control | DevDarshan</title>
+  <meta name="description" content="Security Admin Dashboard – Real-time crowd monitoring, gate control, and AI predictions for DevDarshan temple management." />
+  <!-- AUTH GUARD + SMOOTH FADE -->
+  <style>html{opacity:0;transition:opacity 0.2s ease}</style>
+  <script>
+    (function(){
+      var role=sessionStorage.getItem('dd_role');
+      if(role!=='security'){
+        window.location.replace('index.html');
+      } else {
+        document.addEventListener('DOMContentLoaded',function(){
+          document.documentElement.style.opacity='1';
+        });
+      }
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/security.css" />
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">ॐ</div>
+    <div>
+      <div class="sidebar-title">DevDarshan</div>
+      <div class="sidebar-role">Security Admin</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" onclick="showSection('dashboard')" id="nav-dashboard">
+      <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="showSection('crowdMonitor')" id="nav-crowdMonitor">
+      <span class="nav-icon">👁️</span><span class="nav-label">Crowd Monitor</span>
+    </button>
+    <button class="nav-item" onclick="showSection('gateControl')" id="nav-gateControl">
+      <span class="nav-icon">🚦</span><span class="nav-label">Gate Control</span>
+    </button>
+    <button class="nav-item" onclick="showSection('aiPrediction')" id="nav-aiPrediction">
+      <span class="nav-icon">🤖</span><span class="nav-label">AI Prediction</span>
+    </button>
+    <button class="nav-item" onclick="showSection('alerts')" id="nav-alerts">
+      <span class="nav-icon">🚨</span><span class="nav-label">Alerts</span>
+      <span class="badge" id="alertBadge">3</span>
+    </button>
+    <button class="nav-item" onclick="showSection('slotMonitor')" id="nav-slotMonitor">
+      <span class="nav-icon">📅</span><span class="nav-label">Slot Monitor</span>
+    </button>
+    <button class="nav-item" onclick="showSection('staffDeploy')" id="nav-staffDeploy">
+      <span class="nav-icon">👮</span><span class="nav-label">Staff Deploy</span>
+    </button>
+    <button class="nav-item" onclick="showSection('cctv')" id="nav-cctv">
+      <span class="nav-icon">📹</span><span class="nav-label">CCTV Zones</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="admin-info">
+      <div class="admin-avatar">A</div>
+      <div>
+        <div class="admin-name">Admin User</div>
+        <div class="admin-since">Logged in: <span id="loginTime"></span></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</aside>
+
+<!-- ── MAIN CONTENT ── -->
+<main class="main-content">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div class="page-title" id="pageTitle">Overview Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="temple-selector">
+        <select id="templeSelect" onchange="changeTemple()">
+          <option value="somnath">🛕 Somnath Temple</option>
+          <option value="dwarkadhish">🛕 Dwarkadhish Temple</option>
+          <option value="ambaji">🛕 Ambaji Temple</option>
+          <option value="pavagadh">🛕 Pavagadh Temple</option>
+        </select>
+      </div>
+      <div class="live-clock" id="liveClock"></div>
+      <div class="crowd-pill" id="globalCrowdPill">🟢 LOW</div>
+    </div>
+  </header>
+
+  <!-- ════════ SECTION: DASHBOARD ════════ -->
+  <section class="section active" id="section-dashboard">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-val" id="kpiTotal">2,847</div>
+        <div class="kpi-label">Total Pilgrims Inside</div>
+        <div class="kpi-trend up">↑ 12% vs yesterday</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🎟️</div>
+        <div class="kpi-val" id="kpiBooked">1,240</div>
+        <div class="kpi-label">Slots Booked Today</div>
+        <div class="kpi-trend up">↑ 8% vs yesterday</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">⏱️</div>
+        <div class="kpi-val" id="kpiWait">18 min</div>
+        <div class="kpi-label">Avg Wait Time</div>
+        <div class="kpi-trend down">↓ 5 min vs peak</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🚦</div>
+        <div class="kpi-val" id="kpiGates">7/9</div>
+        <div class="kpi-label">Gates Open</div>
+        <div class="kpi-trend neutral">2 in maintenance</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">👮</div>
+        <div class="kpi-val">38</div>
+        <div class="kpi-label">Staff On Duty</div>
+        <div class="kpi-trend up">↑ 6 deployed</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon">🚨</div>
+        <div class="kpi-val alert-val" id="kpiAlerts">3</div>
+        <div class="kpi-label">Active Alerts</div>
+        <div class="kpi-trend warn">2 medium, 1 high</div>
+      </div>
+    </div>
+
+    <!-- Crowd Overview + Quick Actions -->
+    <div class="dashboard-row">
+      <div class="panel crowd-overview">
+        <h3 class="panel-title">📈 Today's Crowd Flow</h3>
+        <canvas id="crowdFlowChart" height="220"></canvas>
+      </div>
+
+      <div class="panel quick-actions">
+        <h3 class="panel-title">⚡ Quick Actions</h3>
+        <div class="action-grid">
+          <button class="action-btn emergency" onclick="triggerEmergency()">
+            <span>🚨</span> Emergency Broadcast
+          </button>
+          <button class="action-btn gate" onclick="showSection('gateControl')">
+            <span>🔒</span> Lock All Gates
+          </button>
+          <button class="action-btn staff" onclick="showSection('staffDeploy')">
+            <span>👮</span> Deploy Staff
+          </button>
+          <button class="action-btn route" onclick="showSection('crowdMonitor')">
+            <span>🗺️</span> Smart Routing
+          </button>
+          <button class="action-btn pred" onclick="showSection('aiPrediction')">
+            <span>🤖</span> AI Forecast
+          </button>
+          <button class="action-btn alert" onclick="showSection('alerts')">
+            <span>📢</span> View Alerts
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zone Status -->
+    <div class="panel">
+      <h3 class="panel-title">🗺️ Zone Crowd Status</h3>
+      <div class="zone-grid" id="zoneGrid"></div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: CROWD MONITOR ════════ -->
+  <section class="section" id="section-crowdMonitor">
+    <div class="section-header">
+      <h2>👁️ Live Crowd Monitor</h2>
+      <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
+    </div>
+
+    <div class="crowd-levels-bar">
+      <div class="level-block" id="lvlLow">
+        <div class="level-count" id="lvlLowCount">—</div>
+        <div class="level-name">🟢 LOW</div>
+        <div class="level-desc">&lt; 500 people</div>
+      </div>
+      <div class="level-block" id="lvlMed">
+        <div class="level-count" id="lvlMedCount">—</div>
+        <div class="level-name">🟡 MEDIUM</div>
+        <div class="level-desc">500–1500 people</div>
+      </div>
+      <div class="level-block" id="lvlHigh">
+        <div class="level-count" id="lvlHighCount">—</div>
+        <div class="level-name">🔴 HIGH</div>
+        <div class="level-desc">&gt; 1500 people</div>
+      </div>
+    </div>
+
+    <div class="dashboard-row">
+      <div class="panel" style="flex:2">
+        <h3 class="panel-title">📊 Real-time Crowd Density (per zone)</h3>
+        <canvas id="realTimeChart" height="260"></canvas>
+      </div>
+      <div class="panel" style="flex:1">
+        <h3 class="panel-title">🗺️ Temple Map Overview</h3>
+        <div class="temple-map-viz" id="templeMapViz"></div>
+      </div>
+    </div>
+
+    <!-- Crowd Diversion Controls -->
+    <div class="panel">
+      <h3 class="panel-title">🔀 Crowd Diversion Controls</h3>
+      <div class="diversion-controls">
+        <div class="diversion-item">
+          <label>Zone A → Zone B Diversion</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="divAB" onchange="updateDiversion('AB', this)">
+            <label for="divAB" class="toggle-label"></label>
+          </div>
+          <span class="div-status" id="divABStatus">OFF</span>
+        </div>
+        <div class="diversion-item">
+          <label>Entry Gate → North Gate Redirect</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="divEN" onchange="updateDiversion('EN', this)">
+            <label for="divEN" class="toggle-label"></label>
+          </div>
+          <span class="div-status" id="divENStatus">OFF</span>
+        </div>
+        <div class="diversion-item">
+          <label>Main Hall Overflow → Side Path</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="divMS" onchange="updateDiversion('MS', this)">
+            <label for="divMS" class="toggle-label"></label>
+          </div>
+          <span class="div-status" id="divMSStatus">OFF</span>
+        </div>
+        <div class="diversion-item">
+          <label>Prasad Queue Overflow → West</label>
+          <div class="toggle-switch">
+            <input type="checkbox" id="divPW" onchange="updateDiversion('PW', this)">
+            <label for="divPW" class="toggle-label"></label>
+          </div>
+          <span class="div-status" id="divPWStatus">OFF</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: GATE CONTROL ════════ -->
+  <section class="section" id="section-gateControl">
+    <div class="section-header">
+      <h2>🚦 Gate Control System</h2>
+      <div class="gate-summary">
+        <span class="gs-open" id="gsSummaryOpen">7 Open</span>
+        <span class="gs-closed" id="gsSummaryClosed">2 Closed</span>
+      </div>
+    </div>
+
+    <div class="gate-controls-top">
+      <button class="bulk-btn open-all" onclick="setAllGates(true)">✅ Open All Gates</button>
+      <button class="bulk-btn close-all" onclick="setAllGates(false)">🔴 Close All Gates</button>
+      <button class="bulk-btn emergency-close" onclick="emergencyClose()">⚠️ Emergency Close</button>
+    </div>
+
+    <div class="gates-grid" id="gatesGrid"></div>
+
+    <div class="panel capacity-panel">
+      <h3 class="panel-title">📊 Gate Throughput (people/min)</h3>
+      <canvas id="gateThroughputChart" height="200"></canvas>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: AI PREDICTION ════════ -->
+  <section class="section" id="section-aiPrediction">
+    <div class="section-header">
+      <h2>🤖 AI Crowd Prediction Engine</h2>
+      <div class="ai-badge">ML Powered</div>
+    </div>
+
+    <div class="ai-top-row">
+      <div class="panel ai-input-panel">
+        <h3 class="panel-title">⚙️ Prediction Parameters</h3>
+        <div class="ai-form">
+          <div class="ai-field">
+            <label>Target Date</label>
+            <input type="date" id="predDate" />
+          </div>
+          <div class="ai-field">
+            <label>Time Slot</label>
+            <select id="predTime">
+              <option>06:00 AM</option><option>07:00 AM</option><option>08:00 AM</option>
+              <option>09:00 AM</option><option>10:00 AM</option><option selected>11:00 AM</option>
+              <option>12:00 PM</option><option>01:00 PM</option><option>02:00 PM</option>
+              <option>03:00 PM</option><option>04:00 PM</option><option>05:00 PM</option>
+              <option>06:00 PM</option><option>07:00 PM</option><option>08:00 PM</option>
+            </select>
+          </div>
+          <div class="ai-field">
+            <label>Day Type</label>
+            <select id="predDayType">
+              <option value="weekday">Weekday</option>
+              <option value="weekend">Weekend</option>
+              <option value="festival">Festival Day</option>
+              <option value="holiday">Public Holiday</option>
+            </select>
+          </div>
+          <div class="ai-field">
+            <label>Weather</label>
+            <select id="predWeather">
+              <option>☀️ Sunny</option>
+              <option>⛅ Partly Cloudy</option>
+              <option>🌧️ Rainy</option>
+              <option>🌩️ Stormy</option>
+            </select>
+          </div>
+          <button class="predict-btn" onclick="runAIPrediction()">🤖 Run Prediction</button>
+        </div>
+      </div>
+
+      <div class="panel ai-result-panel" id="aiResultPanel">
+        <h3 class="panel-title">📋 Prediction Result</h3>
+        <div class="ai-result" id="aiResultContent">
+          <div class="ai-placeholder">
+            <span>🤖</span>
+            <p>Configure parameters and click "Run Prediction" to see AI-powered crowd forecasts</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 class="panel-title">📈 24-Hour Crowd Prediction Curve</h3>
+      <canvas id="predictionChart" height="220"></canvas>
+    </div>
+
+    <div class="panel">
+      <h3 class="panel-title">📅 7-Day Forecast Summary</h3>
+      <div class="forecast-week" id="forecastWeek"></div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: ALERTS ════════ -->
+  <section class="section" id="section-alerts">
+    <div class="section-header">
+      <h2>🚨 Alert Management</h2>
+      <button class="clear-btn" onclick="clearAllAlerts()">Clear All</button>
+    </div>
+
+    <div class="alert-filters">
+      <button class="filter-btn active" onclick="filterAlerts('all', this)">All</button>
+      <button class="filter-btn" onclick="filterAlerts('high', this)">🔴 High</button>
+      <button class="filter-btn" onclick="filterAlerts('medium', this)">🟡 Medium</button>
+      <button class="filter-btn" onclick="filterAlerts('low', this)">🟢 Low</button>
+    </div>
+
+    <div class="alerts-list" id="alertsList"></div>
+
+    <!-- Broadcast Panel -->
+    <div class="panel broadcast-panel">
+      <h3 class="panel-title">📢 Emergency Broadcast</h3>
+      <div class="broadcast-form">
+        <select id="broadcastType">
+          <option>⚠️ Overcrowding Warning</option>
+          <option>🚨 Emergency Evacuation</option>
+          <option>🔒 Gate Closure Notice</option>
+          <option>✅ All Clear Signal</option>
+          <option>📢 General Announcement</option>
+        </select>
+        <input type="text" id="broadcastMsg" placeholder="Custom message (optional)..." />
+        <button class="broadcast-btn" onclick="sendBroadcast()">📡 Broadcast Now</button>
+      </div>
+      <div class="broadcast-log" id="broadcastLog">
+        <div class="blog-header">Broadcast History</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: SLOT MONITOR ════════ -->
+  <section class="section" id="section-slotMonitor">
+    <div class="section-header">
+      <h2>📅 Slot Monitoring</h2>
+      <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
+    </div>
+
+    <div class="dashboard-row">
+      <div class="panel" style="flex:1">
+        <h3 class="panel-title">📊 Slot Fill Rate</h3>
+        <canvas id="slotFillChart" height="200"></canvas>
+      </div>
+      <div class="panel slot-stats" style="flex:1">
+        <h3 class="panel-title">📋 Today's Slot Summary</h3>
+        <div class="slot-summary-grid" id="slotSummaryGrid"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3 class="panel-title">🔑 Reserve Slot Status (25% Buffer per Slot)</h3>
+      <div class="reserve-info">
+        <div class="reserve-badge">ℹ️ Reserve slots activate automatically when devotees miss their slot</div>
+      </div>
+      <div class="slot-table-wrap">
+        <table class="slot-table" id="slotTable">
+          <thead>
+            <tr>
+              <th>Time Slot</th>
+              <th>Total Capacity</th>
+              <th>Regular Booked</th>
+              <th>Reserve (25%)</th>
+              <th>Reserve Used</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="slotTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: STAFF DEPLOY ════════ -->
+  <section class="section" id="section-staffDeploy">
+    <div class="section-header">
+      <h2>👮 Staff Deployment</h2>
+      <button class="add-staff-btn" onclick="autoDeployStaff()">🤖 Auto-Deploy</button>
+    </div>
+
+    <div class="dashboard-row">
+      <div class="panel" style="flex:1">
+        <h3 class="panel-title">👥 Staff Distribution</h3>
+        <canvas id="staffChart" height="220"></canvas>
+      </div>
+      <div class="panel staff-details" style="flex:2">
+        <h3 class="panel-title">📋 Staff Zone Assignment</h3>
+        <div class="staff-table-wrap">
+          <table class="staff-table" id="staffTable">
+            <thead><tr><th>Zone</th><th>Required</th><th>Deployed</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="staffTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════ SECTION: CCTV ════════ -->
+  <section class="section" id="section-cctv">
+    <div class="section-header">
+      <h2>📹 CCTV Zone Monitoring</h2>
+      <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
+    </div>
+
+    <div class="cctv-grid" id="cctvGrid"></div>
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="js/api.js"></script>
+<script src="js/security.js"></script>
+</body>
+</html>
