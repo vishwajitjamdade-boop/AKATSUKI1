@@ -174,35 +174,60 @@ async function goToStep(step){
 
 async function renderAvailabilityChart(){
   const ctr=document.getElementById('availabilityChart'); if(!ctr) return;
-  ctr.innerHTML='<div style="padding:20px;color:rgba(253,244,255,0.5)">⏳ Loading slots…</div>';
+  ctr.innerHTML='<div style="padding:28px 20px;text-align:center;color:rgba(253,244,255,0.5)">⏳ Loading slots…</div>';
   selectedSlot=null;
   const nb=document.getElementById('step2Next'); if(nb) nb.disabled=true;
+  const info=document.getElementById('selectedSlotInfo'); if(info) info.style.display='none';
   const date=document.getElementById('visitDate').value;
-  const slots=await apiGet(`/slots?date=${date}&temple=${selectedTemple}`)||[];
+  const slots=await apiGet(`/slots?date=${date}&temple=${selectedTemple}`);
+  if(!slots||!slots.length){
+    ctr.innerHTML='<div style="padding:28px 20px;text-align:center;color:rgba(253,244,255,0.5)">⚠️ No slots available for this date. Try another date.</div>';
+    return;
+  }
   ctr.innerHTML='';
   slots.forEach(s=>{
-    const isFull=s.isFull, isAlmost=!isFull&&s.available<=8;
-    let cls='avail-slot ';
-    let statusText='',statusColor='';
-    if(s.isPast)       {cls+='slot-full';statusText='✔ Done';statusColor='#666';}
-    else if(isFull)    {cls+='slot-reserve';statusText='💜 Reserve';statusColor='#ce93d8';}
-    else if(isAlmost)  {cls+='slot-almost';statusText=`⚡ ${s.available} left`;statusColor='#ffd54f';}
-    else               {cls+='slot-available';statusText=`✅ ${s.available} left`;statusColor='#66bb6a';}
-    const div=document.createElement('div'); div.className=cls+(s.isCurrent?' slot-current':'');
-    div.innerHTML=`<div class="as-time">${s.slot}</div><div class="as-count" style="color:rgba(253,244,255,0.5)">Cap: ${s.total}</div><div class="as-status" style="color:${statusColor}">${statusText}</div>`;
-    if(!s.isPast) div.onclick=()=>selectSlot(div,s.slot,s.available,s.reserve,s.isFull);
-    else div.style.cursor='not-allowed';
+    const avail=s.available??Math.max(0,s.regular-s.booked);
+    const isFull=(avail===0);
+    const isAlmost=!isFull&&avail<=8&&avail>0;
+    const canBook=!s.isPast;
+    let cls='avail-slot';
+    let statusText='', statusColor='';
+    if(s.isPast)      { cls+=' slot-full'; statusText='✔ Done';         statusColor='#555'; }
+    else if(isFull)   { cls+=' slot-reserve'; statusText='💜 Reserve';  statusColor='#ce93d8'; }
+    else if(isAlmost) { cls+=' slot-almost'; statusText=`⚡ ${avail} left`; statusColor='#ffd54f'; }
+    else              { cls+=' slot-available'; statusText=`✅ ${avail} left`; statusColor='#66bb6a'; }
+    if(s.isCurrent) cls+=' slot-current';
+    const div=document.createElement('div'); div.className=cls;
+    div.innerHTML=`<div class="as-time">${s.slot}</div><div class="as-count" style="color:rgba(253,244,255,0.45)">Cap: ${s.total}</div><div class="as-status" style="color:${statusColor};font-weight:600">${statusText}</div>`;
+    if(canBook){
+      div.style.cursor='pointer';
+      div.onclick=()=>selectSlot(div,s.slot,avail,s.reserve||20,isFull);
+    } else {
+      div.style.cursor='not-allowed';
+      div.style.opacity='0.55';
+    }
     ctr.appendChild(div);
   });
 }
 
 function selectSlot(el,slot,available,reserve,isFull){
   document.querySelectorAll('.avail-slot').forEach(s=>s.classList.remove('selected'));
-  el.classList.add('selected'); selectedSlot={slot,available,reserve,isFull};
-  const info=document.getElementById('selectedSlotInfo'), cont=document.getElementById('ssiContent'), nb=document.getElementById('step2Next');
+  el.classList.add('selected');
+  selectedSlot={slot,available,reserve,isFull};
+  const info=document.getElementById('selectedSlotInfo');
+  const cont=document.getElementById('ssiContent');
+  const nb=document.getElementById('step2Next');
   if(info) info.style.display='block';
-  if(cont) cont.innerHTML=`<div style="margin-bottom:8px"><strong>⏰ Slot:</strong> ${slot}</div><div style="margin-bottom:8px"><strong>🎟️ Type:</strong> ${isFull?'💜 Reserve Slot (25% buffer)':'✅ Regular Slot'}</div><div style="margin-bottom:8px"><strong>🛕 Temple:</strong> ${TEMPLE_NAMES[selectedTemple]}</div><div style="opacity:0.7;font-size:0.82rem">ℹ️ Missed slot? Reserve (25%) activates automatically.</div>`;
-  if(nb) nb.disabled=false;
+  if(cont) cont.innerHTML=`
+    <div style="margin-bottom:8px"><strong>⏰ Slot:</strong> ${slot}</div>
+    <div style="margin-bottom:8px"><strong>🎟️ Type:</strong> ${isFull?'💜 Reserve Slot (25% buffer)':'✅ Regular Slot'}</div>
+    <div style="margin-bottom:8px"><strong>🛕 Temple:</strong> ${TEMPLE_NAMES[selectedTemple]}</div>
+    <div style="opacity:0.65;font-size:0.82rem">ℹ️ Missed your slot? Reserve (25%) activates automatically.</div>`;
+  if(nb){
+    nb.disabled=false;
+    // Scroll Next button into view so user sees it's enabled
+    setTimeout(()=>nb.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  }
 }
 
 function renderConfirmSummary(){
@@ -244,7 +269,14 @@ function renderTokenCard(b){
 }
 
 function downloadToken(){ showToast('📥 Token saved!','success'); }
-function resetBooking(){ selectedSlot=null;devoteeCount=1;setEl('devoteeCount','1');goToStep(1); }
+function resetBooking(){
+  selectedSlot=null;
+  devoteeCount=1;
+  setEl('devoteeCount','1');
+  const nb=document.getElementById('step2Next'); if(nb) nb.disabled=true;
+  const info=document.getElementById('selectedSlotInfo'); if(info) info.style.display='none';
+  goToStep(1);
+}
 
 // ── MY BOOKINGS ───────────────────────────────────────────────
 async function loadMyBookings(){
