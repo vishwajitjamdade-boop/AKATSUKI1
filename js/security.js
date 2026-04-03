@@ -336,7 +336,8 @@ async function initSlotTable(){
   let filled=0,resUsed=0;
   slots.forEach(s=>{
     if(s.booked>=s.regular) filled++;
-    const ru=allBookings?allBookings.filter(b=>b.slot_time===s.slot&&b.is_reserve).length:0;
+    const bu=allBookings?allBookings.filter(b=>b.slot_time===s.slot):[];
+    const ru=bu.filter(b=>b.is_reserve).length;
     resUsed+=ru;
     const sc=s.status==='DONE'?'#4fc3f7':s.status==='FULL'?'#ef5350':s.status==='ALMOST FULL'?'#ffd54f':'#66bb6a';
     const sbg=`${sc}22`;
@@ -349,9 +350,37 @@ async function initSlotTable(){
 
   // Summary
   const g=document.getElementById('slotSummaryGrid');
-  if(g) g.innerHTML=`<div class="slot-stat-card"><div class="slot-stat-val" style="color:#4fc3f7">${slots.length}</div><div class="slot-stat-label">Total Slots</div></div><div class="slot-stat-card"><div class="slot-stat-val" style="color:#66bb6a">${filled}</div><div class="slot-stat-label">Full</div></div><div class="slot-stat-card"><div class="slot-stat-val" style="color:#ffd54f">${slots.length-filled}</div><div class="slot-stat-label">Available</div></div><div class="slot-stat-card"><div class="slot-stat-val" style="color:#ce93d8">${resUsed}</div><div class="slot-stat-label">Reserve Used</div></div>`;
+  if(g) g.innerHTML=`<div class="slot-stat-card"><div class="slot-stat-val" style="color:#4fc3f7">${slots.length}</div><div class="slot-stat-label">Total Slots</div></div><div class="slot-stat-card"><div class="slot-stat-val" style="color:#66bb6a">${filled}</div><div class="slot-stat-label">Full</div></div><div class="slot-stat-card"><div class="slot-stat-val" style="color:#ffd54f">${slots.length-filled}</div><div class="slot-stat-label">Available</div></div><div class="slot-stat-card"><div class="slot-stat-val" style="color:#ce93d8">${allBookings?allBookings.length:0}</div><div class="slot-stat-label">Total Bookings</div></div>`;
 
   renderSlotFillChart(slots);
+
+  // ── Render devotee bookings list ──────────────────────────────
+  const listEl=document.getElementById('devoteeBookingsList'); if(!listEl) return;
+  if(!allBookings||!allBookings.length){
+    listEl.innerHTML='<div style="color:rgba(232,234,246,0.4);text-align:center;padding:32px">No bookings yet. Bookings appear here once a devotee books a slot.</div>';
+    return;
+  }
+  const TNAMES={somnath:'Somnath',dwarkadhish:'Dwarkadhish',ambaji:'Ambaji',pavagadh:'Pavagadh'};
+  listEl.innerHTML='';
+  const sorted=[...allBookings].sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
+  sorted.forEach(b=>{
+    const stColor=b.status==='upcoming'?'#ce93d8':b.status==='cancelled'?'#ef5350':'#66bb6a';
+    const stLabel=b.status==='upcoming'?'🟡 Upcoming':b.status==='cancelled'?'🔴 Cancelled':'✅ Completed';
+    const temple=TNAMES[b.temple_id||b.temple]||b.temple_id||b.temple||'—';
+    const created=b.created_at?new Date(b.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'—';
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:14px;padding:13px 16px;border-bottom:1px solid rgba(255,255,255,0.06);flex-wrap:wrap';
+    row.innerHTML=`
+      <div style="font-size:1.3rem;font-weight:900;color:#f5a623;font-family:monospace;min-width:72px">${b.token||'—'}</div>
+      <div style="flex:1;min-width:160px">
+        <div style="font-weight:600;font-size:0.9rem">${b.name||'Devotee'}</div>
+        <div style="font-size:0.78rem;color:rgba(232,234,246,0.5)">🛕 ${temple} &nbsp;|&nbsp; ⏰ ${b.slot_time||'—'} &nbsp;|&nbsp; 📅 ${b.booking_date||'—'}</div>
+      </div>
+      <div style="font-size:0.8rem;color:rgba(232,234,246,0.5)">👥 ${b.people||1} pax${b.is_reserve?' <span style="color:#ce93d8">💜 Reserve</span>':''}</div>
+      <div style="font-size:0.78rem;color:rgba(232,234,246,0.4)">${created}</div>
+      <div style="padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;background:${stColor}22;color:${stColor};border:1px solid ${stColor}44">${stLabel}</div>`;
+    listEl.appendChild(row);
+  });
 }
 
 function renderSlotFillChart(slots){

@@ -62,13 +62,20 @@ function _fbStats(){
 function _fbZones(){ return _FZ.map(z=>({...z,count:Math.round(_cc()*z.weight),percentage:Math.min(100,Math.round((Math.round(_cc()*z.weight)/z.max)*100))})); }
 function _fbSlots(){
   const nowM=new Date().getHours()*60+new Date().getMinutes(), mul=_cm();
+  // Read bookings saved locally by devotee portal
+  const localBks=JSON.parse(localStorage.getItem('dd_bookings')||'[]').filter(b=>b.status!=='cancelled');
   return _AS.map(s=>{
     const[H,M]=s.split('–')[0].split(':').map(Number); const sm=H*60+M;
     const isPast=sm+30<=nowM, isCurrent=sm<=nowM&&nowM<sm+30;
     const pct=_HPC[H]/100;
-    const booked=isPast?Math.round(60*Math.min(1,pct*mul)):Math.round(60*Math.min(0.8,pct*mul*0.7));
+    const baseBooked=isPast?Math.round(60*Math.min(1,pct*mul)):Math.round(60*Math.min(0.8,pct*mul*0.7));
+    // Add real bookings from localStorage for this slot
+    const realBooked=localBks.filter(b=>b.slot_time===s).reduce((sum,b)=>sum+(b.people||1),0);
+    const booked=Math.min(60, baseBooked+realBooked);
     const available=Math.max(0,60-booked);
-    return {slot:s,total:80,regular:60,reserve:20,booked,available,status:isPast?'DONE':available===0?'FULL':available<=8?'ALMOST FULL':'AVAILABLE',isPast,isCurrent,isFull:available===0};
+    return {slot:s,total:80,regular:60,reserve:20,booked,available,
+      status:isPast?'DONE':available===0?'FULL':available<=8?'ALMOST FULL':'AVAILABLE',
+      isPast,isCurrent,isFull:available===0};
   });
 }
 function _fbAI(hour,dayType,weather){
@@ -103,8 +110,16 @@ function _fallback(path){
   if(path.startsWith('/crowd/zones')) return _fbZones();
   if(path==='/stats/today')     return _fbStats();
   // FIX: slots path may have query params (?date=...&temple=...)
-  if(path.startsWith('/slots/my')){const local=JSON.parse(localStorage.getItem('dd_bookings')||'[]');return local.filter(b=>b.status!=='cancelled');}
-  if(path.startsWith('/slots/all')) return [];
+  // Order matters: more specific paths first
+  if(path.startsWith('/slots/my')){
+    const local=JSON.parse(localStorage.getItem('dd_bookings')||'[]');
+    return local.filter(b=>b.status!=='cancelled');
+  }
+  if(path.startsWith('/slots/all')){
+    // FIX: Return actual localStorage bookings so Security Admin can see them
+    const local=JSON.parse(localStorage.getItem('dd_bookings')||'[]');
+    return local.filter(b=>b.status!=='cancelled');
+  }
   if(path.startsWith('/slots'))    return _fbSlots();
   if(path==='/gates')           return JSON.parse(localStorage.getItem('dd_gates')||JSON.stringify(_DG));
   if(path==='/ai/today24h')     return _fb24h();
@@ -139,7 +154,9 @@ async function apiPost(path,body){
     if(path==='/slots/book'){
       const tok='T'+Date.now().toString().slice(-5);
       const bks=JSON.parse(localStorage.getItem('dd_bookings')||'[]');
-      const b={...body,id:Date.now().toString(),token:tok,status:'upcoming',is_reserve:0,created_at:new Date().toISOString()};
+      // Store name from sessionStorage so security admin can see it
+      const name=sessionStorage.getItem('dd_name')||'Devotee';
+      const b={...body,id:Date.now().toString(),token:tok,name,status:'upcoming',is_reserve:0,created_at:new Date().toISOString()};
       bks.push(b); localStorage.setItem('dd_bookings',JSON.stringify(bks));
       return b;
     }
